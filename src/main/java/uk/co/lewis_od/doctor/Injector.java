@@ -4,13 +4,13 @@ import uk.co.lewis_od.doctor.graph.DependencyGraph;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,7 +69,7 @@ public class Injector {
     @SuppressWarnings("unchecked")
     private <T> void registerBindingsForDependencies(final Class<?> root) {
         Set<Class<?>> visited = new LinkedHashSet<>();
-        Stack<Class<?>> stack = new Stack<>();
+        Deque<Class<?>> stack = new ArrayDeque<>();
         stack.push(root);
 
         while (!stack.isEmpty()) {
@@ -82,7 +82,7 @@ public class Injector {
                 if (dependencies.isEmpty()) {
                     if (!bindings.contains(vertex)) {
                         Class<T> clazz = (Class<T>) vertex;
-                        bindings.put(clazz, createDefaultProvider(clazz));
+                        bindings.put(clazz, ProviderFactory.createProvider(clazz, bindings));
                     }
                 } else {
                     stack.push(vertex); // Come back to vertex once dependencies bound
@@ -100,35 +100,8 @@ public class Injector {
                 }
 
                 Class<T> clazz = (Class<T>) vertex;
-                Constructor<T> constructor = (Constructor<T>) Stream.of(clazz.getConstructors()).filter(Injector::hasInjectAnnotation).findAny().orElseThrow();
-                List<Provider<?>> dependencyProviders = Stream.of(constructor.getParameters())
-                        .map(Parameter::getType)
-                        .map(bindings::get)
-                        .collect(Collectors.toUnmodifiableList());
-                bindings.put(clazz, new ConstructorProvider<>(constructor, dependencyProviders));
+                bindings.put(clazz, ProviderFactory.createProvider(clazz, bindings));
             }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> Provider<T> createDefaultProvider(final Class<T> clazz) {
-        List<Constructor<?>> publicConstructors = List.of(clazz.getConstructors());
-
-        Optional<Constructor<?>> noArgsConstructor = publicConstructors.stream()
-                .filter(constructor -> constructor.getParameterCount() == 0)
-                .findAny();
-
-        if (noArgsConstructor.isEmpty()) {
-            throw new ProviderCreationException(
-                    "Expected " + clazz.getName() + " to have no dependencies and a no-args constructor.");
-        }
-
-        try {
-            T instance = (T) noArgsConstructor.get().newInstance();
-            return () -> instance;
-        } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
-            throw new ProviderCreationException(
-                    "Unable to create instance of " + clazz.getName() + " from no-args constructor.", e);
         }
     }
 
