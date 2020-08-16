@@ -3,6 +3,7 @@ package uk.co.lewis_od.doctor;
 import org.junit.jupiter.api.Test;
 import uk.co.lewis_od.doctor.demo.Computer;
 import uk.co.lewis_od.doctor.demo.Display;
+import uk.co.lewis_od.doctor.demo.IntelProcessor;
 import uk.co.lewis_od.doctor.demo.Memory;
 import uk.co.lewis_od.doctor.demo.Motherboard;
 import uk.co.lewis_od.doctor.demo.Mouse;
@@ -28,8 +29,9 @@ class InjectorTest {
     }
 
     @Test
-    void inject_pureClasses() {
+    void inject_demo() {
         Injector injector = new Injector();
+        injector.registerBinding(Processor.class, IntelProcessor::new);
 
         Computer computer = injector.getInstance(Computer.class);
 
@@ -40,7 +42,7 @@ class InjectorTest {
         Tower tower = computer.getTower();
         assertThat(tower.getMemory()).isNotNull();
         assertThat(tower.getMotherboard()).isNotNull();
-        assertThat(tower.getProcessor()).isNotNull();
+        assertThat(tower.getProcessor()).isInstanceOf(IntelProcessor.class);
     }
 
     @Test

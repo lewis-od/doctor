@@ -19,7 +19,7 @@ public class Injector {
     private final Bindings bindings = new Bindings();
     private final DependencyGraph graph = new DependencyGraph();
 
-    public <T> void registerBinding(final Class<? super T> clazz, Provider<T> provider) {
+    public <T> void registerBinding(final Class<? super T> clazz, final Provider<T> provider) {
         bindings.put(clazz, provider);
     }
 
