@@ -1,4 +1,4 @@
-package uk.co.lewisod.doctor;
+package uk.co.lewis_od.doctor;
 
 class ProviderCreationException extends RuntimeException {
     public ProviderCreationException(String message) {

@@ -1,14 +1,14 @@
-package uk.co.lewisod.doctor;
+package uk.co.lewis_od.doctor;
 
 import org.junit.jupiter.api.Test;
-import uk.co.lewisod.doctor.demo.Computer;
-import uk.co.lewisod.doctor.demo.Display;
-import uk.co.lewisod.doctor.demo.Memory;
-import uk.co.lewisod.doctor.demo.Motherboard;
-import uk.co.lewisod.doctor.demo.Mouse;
-import uk.co.lewisod.doctor.demo.Processor;
-import uk.co.lewisod.doctor.demo.Tower;
-import uk.co.lewisod.doctor.graph.DependencyGraph;
+import uk.co.lewis_od.doctor.demo.Computer;
+import uk.co.lewis_od.doctor.demo.Display;
+import uk.co.lewis_od.doctor.demo.Memory;
+import uk.co.lewis_od.doctor.demo.Motherboard;
+import uk.co.lewis_od.doctor.demo.Mouse;
+import uk.co.lewis_od.doctor.demo.Processor;
+import uk.co.lewis_od.doctor.demo.Tower;
+import uk.co.lewis_od.doctor.graph.DependencyGraph;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

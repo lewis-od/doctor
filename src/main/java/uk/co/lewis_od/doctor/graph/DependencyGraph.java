@@ -1,4 +1,4 @@
-package uk.co.lewisod.doctor.graph;
+package uk.co.lewis_od.doctor.graph;
 
 import java.util.ArrayList;
 import java.util.HashMap;

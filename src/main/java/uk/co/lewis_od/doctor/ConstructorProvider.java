@@ -1,4 +1,4 @@
-package uk.co.lewisod.doctor;
+package uk.co.lewis_od.doctor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

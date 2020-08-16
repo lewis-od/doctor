@@ -1,4 +1,4 @@
-package uk.co.lewisod.doctor.demo;
+package uk.co.lewis_od.doctor.demo;
 
 import javax.inject.Inject;
 

@@ -1,6 +1,6 @@
-package uk.co.lewisod.doctor;
+package uk.co.lewis_od.doctor;
 
-import uk.co.lewisod.doctor.graph.DependencyGraph;
+import uk.co.lewis_od.doctor.graph.DependencyGraph;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
