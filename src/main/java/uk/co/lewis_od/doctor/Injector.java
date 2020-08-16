@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,6 +19,12 @@ public class Injector {
 
     private final Bindings bindings = new Bindings();
     private final DependencyGraph graph = new DependencyGraph();
+
+    public Injector() {}
+
+    public Injector(final Consumer<Binder> bindingFunction) {
+        bindingFunction.accept(new Binder(bindings));
+    }
 
     public <T> void registerBinding(final Class<? super T> clazz, final Provider<T> provider) {
         bindings.put(clazz, provider);
@@ -37,7 +44,7 @@ public class Injector {
         return provider.get();
     }
 
-    void addDependenciesToGraph(final Class<?> root) {
+    private void addDependenciesToGraph(final Class<?> root) {
         graph.addClass(root);
 
         List<Constructor<?>> publicConstructors = List.of(root.getConstructors());

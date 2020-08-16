@@ -16,20 +16,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InjectorTest {
 
     @Test
-    void createGraph() {
-        Injector injector = new Injector();
-        injector.addDependenciesToGraph(Computer.class);
+    void getInstance_interfaceBindings() {
+        Injector injector = new Injector(binder -> {
+            binder.bind(Greeter.class).toProvider(GreeterImpl::new);
+        });
 
-        DependencyGraph graph = injector.getDependencyGraph();
-
-        assertThat(graph.getDependencies(Computer.class))
-                .containsExactlyInAnyOrder(Display.class, Mouse.class, Tower.class);
-        assertThat(graph.getDependencies(Tower.class))
-                .containsExactlyInAnyOrder(Processor.class, Memory.class, Motherboard.class);
+        Printer printer = injector.getInstance(Printer.class);
+        assertThat(printer.printHello()).isEqualTo("PRINTING: Hello");
     }
 
     @Test
-    void inject_demo() {
+    void getInstance_demo() {
         Injector injector = new Injector();
         injector.registerBinding(Processor.class, IntelProcessor::new);
 
@@ -43,14 +40,11 @@ class InjectorTest {
         assertThat(tower.getMemory()).isNotNull();
         assertThat(tower.getMotherboard()).isNotNull();
         assertThat(tower.getProcessor()).isInstanceOf(IntelProcessor.class);
-    }
 
-    @Test
-    void inject_interfaceBindings() {
-        Injector injector = new Injector();
-        injector.registerBinding(Greeter.class, GreeterImpl::new);
-
-        Printer printer = injector.getInstance(Printer.class);
-        assertThat(printer.printHello()).isEqualTo("PRINTING: Hello");
+        DependencyGraph graph = injector.getDependencyGraph();
+        assertThat(graph.getDependencies(Computer.class))
+                .containsExactlyInAnyOrder(Display.class, Mouse.class, Tower.class);
+        assertThat(graph.getDependencies(Tower.class))
+                .containsExactlyInAnyOrder(Processor.class, Memory.class, Motherboard.class);
     }
 }
