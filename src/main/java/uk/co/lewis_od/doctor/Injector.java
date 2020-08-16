@@ -53,13 +53,14 @@ public class Injector {
                 .filter(constructor -> constructor.getParameterCount() == 0)
                 .findAny();
 
-        List<Constructor<?>> annotatedConstructors = publicConstructors.stream()
-                .filter(Injector::hasInjectAnnotation)
-                .collect(Collectors.toList());
-
+        // TODO: Interface could be bound to implementation that has dependencies
         if (noArgsConstructor.isPresent() || root.isInterface()) {
             return;
         }
+
+        List<Constructor<?>> annotatedConstructors = publicConstructors.stream()
+                .filter(Injector::hasInjectAnnotation)
+                .collect(Collectors.toList());
 
         if (annotatedConstructors.size() != 1) {
             throw new ProviderCreationException(
@@ -73,8 +74,7 @@ public class Injector {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> void registerBindingsForDependencies(final Class<?> root) {
+    private void registerBindingsForDependencies(final Class<?> root) {
         Set<Class<?>> visited = new LinkedHashSet<>();
         Deque<Class<?>> stack = new ArrayDeque<>();
         stack.push(root);
@@ -87,28 +87,33 @@ public class Injector {
                 visited.add(vertex);
 
                 if (dependencies.isEmpty()) {
-                    if (!bindings.contains(vertex)) {
-                        Class<T> clazz = (Class<T>) vertex;
-                        bindings.put(clazz, ProviderFactory.createProvider(clazz, bindings));
-                    }
+                    createBindingIfRequired(vertex);
                 } else {
                     stack.push(vertex); // Come back to vertex once dependencies bound
                     dependencies.forEach(stack::push);
                 }
             } else {
                 // Revisiting a node now that it's dependencies should be bound
-                Set<Class<?>> unboundDependencies = dependencies.stream()
-                        .filter(dep -> !bindings.contains(dep))
-                        .collect(Collectors.toSet());
-                if (!unboundDependencies.isEmpty()) {
-                    String errorMessage = "Missing providers for classes: "
-                            + unboundDependencies.stream().map(Class::getName).collect(Collectors.joining(", "));
-                    throw new IllegalStateException(errorMessage);
-                }
-
-                Class<T> clazz = (Class<T>) vertex;
-                bindings.put(clazz, ProviderFactory.createProvider(clazz, bindings));
+                checkDependenciesAreBound(dependencies);
+                createBindingIfRequired(vertex);
             }
+        }
+    }
+
+    private <T> void createBindingIfRequired(final Class<T> vertex) {
+        if (!bindings.contains(vertex)) {
+            bindings.put(vertex, ProviderFactory.createProvider(vertex, bindings));
+        }
+    }
+
+    private void checkDependenciesAreBound(final Set<Class<?>> dependencies) {
+        Set<Class<?>> unboundDependencies = dependencies.stream()
+                .filter(dep -> !bindings.contains(dep))
+                .collect(Collectors.toSet());
+        if (!unboundDependencies.isEmpty()) {
+            String errorMessage = "Missing providers for classes: "
+                    + unboundDependencies.stream().map(Class::getName).collect(Collectors.joining(", "));
+            throw new IllegalStateException(errorMessage);
         }
     }
 
@@ -120,5 +125,4 @@ public class Injector {
         return Stream.of(constructor.getAnnotationsByType(Inject.class))
                 .findAny().isPresent();
     }
-
 }
