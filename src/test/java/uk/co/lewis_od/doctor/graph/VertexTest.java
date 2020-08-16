@@ -10,7 +10,7 @@ class VertexTest {
     @Test
     void constructor_nullValue() {
         assertThatThrownBy(() -> Vertex.forClass(null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
