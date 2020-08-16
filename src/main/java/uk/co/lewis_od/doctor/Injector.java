@@ -26,35 +26,45 @@ public class Injector {
         bindingFunction.accept(new Binder(bindings));
     }
 
-    public <T> void registerBinding(final Class<? super T> clazz, final Provider<T> provider) {
-        bindings.put(clazz, provider);
-    }
-
     public <T> T getInstance(final Class<T> clazz) {
-        if (clazz.isInterface() && !bindings.contains(clazz)) {
+        if (clazz.isInterface() && !(bindings.isBoundToProvider(clazz) || bindings.isBoundToImplementation(clazz))) {
             throw new RuntimeException("No binding for interface " + clazz.getName());
         }
 
-        if (!clazz.isInterface() && !graph.containsClass(clazz)) {
+        if (!graph.containsClass(clazz)) {
             addDependenciesToGraph(clazz);
             registerBindingsForDependencies(clazz);
         }
 
-        Provider<T> provider = bindings.get(clazz);
+        Provider<T> provider = bindings.getProvider(clazz);
         return provider.get();
     }
 
-    private void addDependenciesToGraph(final Class<?> root) {
-        graph.addClass(root);
+    private void addDependenciesToGraph(final Class<?> type) {
+        graph.addClass(type);
 
-        List<Constructor<?>> publicConstructors = List.of(root.getConstructors());
+        Class<?> implementation = type;
+        if (type.isInterface()) {
+            if (bindings.isBoundToProvider(type)) {
+                return;
+            } else if (!bindings.isBoundToImplementation(type)) {
+                throw new BindingException("No implementation/provider bound for interface " + type.getName());
+            }
+
+            implementation = bindings.getImplementingClass(type);
+        }
+
+        addDependenciesFromConstructor(type, implementation);
+    }
+
+    public void addDependenciesFromConstructor(final Class<?> type, final Class<?> implementation) {
+        List<Constructor<?>> publicConstructors = List.of(implementation.getConstructors());
 
         Optional<Constructor<?>> noArgsConstructor = publicConstructors.stream()
                 .filter(constructor -> constructor.getParameterCount() == 0)
                 .findAny();
 
-        // TODO: Interface could be bound to implementation that has dependencies
-        if (noArgsConstructor.isPresent() || root.isInterface()) {
+        if (noArgsConstructor.isPresent()) {
             return;
         }
 
@@ -64,13 +74,13 @@ public class Injector {
 
         if (annotatedConstructors.size() != 1) {
             throw new ProviderCreationException(
-                    "Class " + root.getName() + " should have a public constructor either with no parameters, or annotated @Inject");
+                    "Class " + implementation.getName() + " should have a public constructor either with no parameters, or annotated @Inject");
         }
 
         Constructor<?> annotatedConstructor = annotatedConstructors.get(0);
         for (Parameter parameter : annotatedConstructor.getParameters()) {
             addDependenciesToGraph(parameter.getType());
-            graph.addDependency(root, parameter.getType());
+            graph.addDependency(type, parameter.getType());
         }
     }
 
@@ -89,7 +99,7 @@ public class Injector {
                 if (dependencies.isEmpty()) {
                     createBindingIfRequired(vertex);
                 } else {
-                    stack.push(vertex); // Come back to vertex once dependencies bound
+                    stack.push(vertex); // Come back to vertex once dependencies are bound
                     dependencies.forEach(stack::push);
                 }
             } else {
@@ -101,14 +111,14 @@ public class Injector {
     }
 
     private <T> void createBindingIfRequired(final Class<T> vertex) {
-        if (!bindings.contains(vertex)) {
-            bindings.put(vertex, ProviderFactory.createProvider(vertex, bindings));
+        if (!bindings.isBoundToProvider(vertex)) {
+            bindings.bindProvider(vertex, ProviderFactory.createProvider(vertex, bindings));
         }
     }
 
     private void checkDependenciesAreBound(final Set<Class<?>> dependencies) {
         Set<Class<?>> unboundDependencies = dependencies.stream()
-                .filter(dep -> !bindings.contains(dep))
+                .filter(dep -> !bindings.isBoundToProvider(dep))
                 .collect(Collectors.toSet());
         if (!unboundDependencies.isEmpty()) {
             String errorMessage = "Missing providers for classes: "

@@ -3,16 +3,17 @@ package uk.co.lewis_od.doctor;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Bindings {
+class Bindings {
 
     private final Map<Class<?>, Provider<?>> providerMap = new HashMap<>();
+    private final Map<Class<?>, Class<?>> interfaceMap = new HashMap<>();
 
-    public <T> void put(final Class<? super T> clazz, final Provider<T> provider) {
+    <T> void bindProvider(final Class<? super T> clazz, final Provider<T> provider) {
         providerMap.put(clazz, provider);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Provider<T> get(final Class<T> clazz) {
+    <T> Provider<T> getProvider(final Class<T> clazz) {
        Provider<?> provider = providerMap.get(clazz);
        if (provider == null) {
            return null;
@@ -21,7 +22,22 @@ public class Bindings {
        return (Provider<T>) provider;
     }
 
-    public boolean contains(final Class<?> clazz) {
+    <T> void bindInterface(final Class<? super T> intface, final Class<T> implementation) {
+        if (!intface.isInterface()) {
+            throw new BindingException("Expected " + intface.getName() + " to be an interface.");
+        }
+        interfaceMap.put(intface, implementation);
+    }
+
+    public Class<?> getImplementingClass(final Class<?> intface) {
+        return interfaceMap.get(intface);
+    }
+
+    public boolean isBoundToProvider(final Class<?> clazz) {
         return providerMap.containsKey(clazz);
+    }
+
+    public boolean isBoundToImplementation(final Class<?> clazz) {
+        return interfaceMap.containsKey(clazz);
     }
 }

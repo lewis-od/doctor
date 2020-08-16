@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-public class ConstructorProvider<T> implements Provider<T> {
+class ConstructorProvider<T> implements Provider<T> {
 
     private final List<Provider<?>> dependencyProviders;
     private final Constructor<T> constructor;

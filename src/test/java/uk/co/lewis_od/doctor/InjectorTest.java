@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InjectorTest {
 
     @Test
-    void getInstance_interfaceBindings() {
+    void getInstance_providerBindings() {
         Injector injector = new Injector(binder -> {
             binder.bind(Greeter.class).toProvider(GreeterImpl::new);
         });
@@ -26,9 +26,20 @@ class InjectorTest {
     }
 
     @Test
+    void getInstance_classBindings() {
+        Injector injector = new Injector(binder -> {
+            binder.bind(Greeter.class).toClass(GreeterImpl.class);
+        });
+
+        Printer printer = injector.getInstance(Printer.class);
+        assertThat(printer.printHello()).isEqualTo("PRINTING: Hello");
+    }
+
+    @Test
     void getInstance_demo() {
-        Injector injector = new Injector();
-        injector.registerBinding(Processor.class, IntelProcessor::new);
+        Injector injector = new Injector(binder -> {
+            binder.bind(Processor.class).toClass(IntelProcessor.class);
+        });
 
         Computer computer = injector.getInstance(Computer.class);
 
@@ -40,6 +51,9 @@ class InjectorTest {
         assertThat(tower.getMemory()).isNotNull();
         assertThat(tower.getMotherboard()).isNotNull();
         assertThat(tower.getProcessor()).isInstanceOf(IntelProcessor.class);
+
+        IntelProcessor processor = (IntelProcessor) tower.getProcessor();
+        assertThat(processor.getTransistorArray()).isNotNull();
 
         DependencyGraph graph = injector.getDependencyGraph();
         assertThat(graph.getDependencies(Computer.class))

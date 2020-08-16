@@ -23,8 +23,8 @@ class BinderTest {
     void bind_toProvider() {
         binder.bind(Greeter.class).toProvider(() -> greeterInstance);
 
-        assertThat(bindings.contains(Greeter.class)).isTrue();
-        Provider<Greeter> provider = bindings.get(Greeter.class);
+        assertThat(bindings.isBoundToProvider(Greeter.class)).isTrue();
+        Provider<Greeter> provider = bindings.getProvider(Greeter.class);
         assertThat(provider.get()).isEqualTo(greeterInstance);
     }
 
@@ -32,9 +32,16 @@ class BinderTest {
     void bind_toInstance() {
         binder.bind(Greeter.class).toInstance(greeterInstance);
 
-        assertThat(bindings.contains(Greeter.class)).isTrue();
-        Provider<Greeter> provider = bindings.get(Greeter.class);
+        assertThat(bindings.isBoundToProvider(Greeter.class)).isTrue();
+        Provider<Greeter> provider = bindings.getProvider(Greeter.class);
         assertThat(provider.get()).isEqualTo(greeterInstance);
+    }
+
+    @Test
+    void bind_toClass() {
+        binder.bind(Greeter.class).toClass(GreeterImpl.class);
+
+        assertThat(bindings.getImplementingClass(Greeter.class)).isEqualTo(GreeterImpl.class);
     }
 
     @Test

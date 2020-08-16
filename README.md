@@ -15,7 +15,8 @@ dependency graph isn't a directed tree, things will break.
 
 To bind interfaces to implementations:
 ```java
-Injector injector = new Injector();
-injector.registerBinding(Example.class, ExampleImpl::new);
-Example instance = injector.getInstance(ExampleInterface.class);
+Injector injector = new Injector(binder -> {
+    binder.bind(Example.class).toClass(ExampleImpl.class);
+});
+Example instance = injector.getInstance(Example.class);
 ```

@@ -8,15 +8,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ProviderFactory {
+class ProviderFactory {
 
     private ProviderFactory() {}
 
     @SuppressWarnings("unchecked")
     static <T> Provider<T> createProvider(final Class<T> clazz, final Bindings bindings) {
-        Constructor<?>[] constructors = clazz.getConstructors();
+        Class<?> implementation = clazz.isInterface() ? bindings.getImplementingClass(clazz) : clazz;
+
+        Constructor<?>[] constructors = implementation.getConstructors();
         if (constructors.length != 1) {
-            throw new ProviderCreationException("Class " + clazz.getName() + " should have only 1 constructor.");
+            throw new ProviderCreationException("Class " + implementation.getName() + " should have only 1 constructor.");
         }
 
         Constructor<T> constructor = (Constructor<T>) constructors[0];
@@ -27,7 +29,7 @@ public class ProviderFactory {
         boolean annotatedWithInject = List.of(constructor.getAnnotations()).stream()
                 .anyMatch(annotation -> annotation.annotationType() == Inject.class);
         if (!annotatedWithInject) {
-            throw new ProviderCreationException("Class " + clazz.getName() + " should have a constructor annotated with @Inject");
+            throw new ProviderCreationException("Class " + implementation.getName() + " should have a constructor annotated with @Inject");
         }
 
         return fromArgsConstructor(constructor, bindings);
@@ -47,7 +49,7 @@ public class ProviderFactory {
                                                final Bindings bindings) {
         List<Provider<?>> dependencyProviders = Stream.of(constructor.getParameters())
                 .map(Parameter::getType)
-                .map(bindings::get)
+                .map(bindings::getProvider)
                 .collect(Collectors.toUnmodifiableList());
         return new ConstructorProvider<>(constructor, dependencyProviders);
     }

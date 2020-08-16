@@ -13,11 +13,15 @@ public class Binder {
         }
 
         public void toProvider(final Provider<T> provider) {
-            bindings.put(from, provider);
+            bindings.bindProvider(from, provider);
         }
 
         public void toInstance(final T instance) {
-            bindings.put(from, () -> instance);
+            bindings.bindProvider(from, () -> instance);
+        }
+
+        public void toClass(final Class<? extends T> to) {
+            bindings.bindInterface(from, to);
         }
     }
 

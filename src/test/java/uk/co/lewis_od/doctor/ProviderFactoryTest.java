@@ -27,12 +27,21 @@ class ProviderFactoryTest {
 
     @Test
     void createProvider_argsConstructor() {
-        bindings.put(NoArgsConstructor.class, NoArgsConstructor::new);
+        bindings.bindProvider(NoArgsConstructor.class, NoArgsConstructor::new);
 
         Provider<ArgsConstructor> provider = ProviderFactory.createProvider(ArgsConstructor.class, bindings);
 
         assertThat(provider).isInstanceOf(ConstructorProvider.class);
         assertThat(provider.get()).isInstanceOf(ArgsConstructor.class);
+    }
+
+    @Test
+    void createProvider_boundInterface() {
+        bindings.bindInterface(Greeter.class, GreeterImpl.class);
+
+        Provider<Greeter> provider = ProviderFactory.createProvider(Greeter.class, bindings);
+
+        assertThat(provider.get()).isInstanceOf(GreeterImpl.class);
     }
 
     @Test
